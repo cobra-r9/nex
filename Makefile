@@ -7,7 +7,7 @@ OBJ_DIR  := build
 BIN_DIR  := $(OBJ_DIR)/bin
 
 CC       := gcc
-CFLAGS   := -std=c99 -pedantic -Wall -Wextra
+CFLAGS   := -std=c23 -pedantic -Wall -Wextra
 CPPFLAGS := -I$(SRC_DIR) -I$(INC_DIR) -D_POSIX_C_SOURCE=200809L -MMD -MP
 LDLIBS   := -lm -lxcb -lxcb-util -lxcb-keysyms -lxcb-icccm -lxcb-ewmh -lxcb-randr -lxcb-xinerama -lxcb-shape
 
