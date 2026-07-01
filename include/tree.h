@@ -1,5 +1,6 @@
-#ifndef NEX_TREE_H
-#define NEX_TREE_H
+#pragma once 
+
+#include "types.h"
 
 #define MIN_WIDTH   32
 #define MIN_HEIGHT  32
@@ -97,4 +98,4 @@ unsigned int sticky_count(node_t *n);
 unsigned int private_count(node_t *n);
 unsigned int locked_count(node_t *n);
 
-#endif
+
