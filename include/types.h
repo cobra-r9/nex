@@ -231,6 +231,7 @@ struct constraints_t {
 typedef struct node_t node_t;
 struct node_t {
 	uint32_t id;
+    uint32_t insertion_seq;
 	split_type_t split_type;
 	double split_ratio;
 	presel_t *presel;

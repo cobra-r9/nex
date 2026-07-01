@@ -18,6 +18,8 @@
 
 /* TODO: move to settings.c/settings.h as a real user-configurable setting */
 static const double master_ratio = 0.55;
+static uint32_t node_seq_counter = 0;
+
 
 void arrange(monitor_t *m, desktop_t *d)
 {
@@ -117,6 +119,15 @@ void render_node(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect)
 	window_border_width(n->id, bw);
 }
 
+static int cmp_leaf_seq(const void *a, const void *b)
+{
+	node_t *na = *(node_t * const *) a;
+	node_t *nb = *(node_t * const *) b;
+	if (na->insertion_seq < nb->insertion_seq) return -1;
+	if (na->insertion_seq > nb->insertion_seq) return 1;
+	return 0;
+}
+
 void apply_master_stack(monitor_t *m, desktop_t *d, xcb_rectangle_t rect)
 {
 	int n_leaves = 0;
@@ -129,34 +140,40 @@ void apply_master_stack(monitor_t *m, desktop_t *d, xcb_rectangle_t rect)
 		return;
 	}
 
+	node_t **leaves = malloc(n_leaves * sizeof(node_t *));
+	int idx = 0;
+	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
+		if (!f->hidden && f->client != NULL) {
+			leaves[idx++] = f;
+		}
+	}
+
+	qsort(leaves, n_leaves, sizeof(node_t *), cmp_leaf_seq);
+
 	unsigned int master_width = (n_leaves == 1) ? rect.width : (unsigned int) (rect.width * master_ratio);
 	xcb_rectangle_t master_rect = {rect.x, rect.y, master_width, rect.height};
 	xcb_rectangle_t stack_rect  = {(int16_t) (rect.x + master_width), rect.y,
 	                                rect.width - master_width, rect.height};
 
-	int i = 0;
 	int stack_n = n_leaves - 1;
-	int stack_i = 0;
 
-	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
-		if (f->hidden || f->client == NULL) {
-			continue;
-		}
+	for (int i = 0; i < n_leaves; i++) {
 		if (i == 0) {
-			render_node(m, d, f, master_rect);
+			render_node(m, d, leaves[i], master_rect);
 		} else {
+			int si = i - 1;
 			unsigned int h = stack_rect.height / stack_n;
 			xcb_rectangle_t r = {
 				stack_rect.x,
-				(int16_t) (stack_rect.y + stack_i * h),
+				(int16_t) (stack_rect.y + si * h),
 				stack_rect.width,
-				(stack_i == stack_n - 1) ? (stack_rect.height - stack_i * h) : h
+				(si == stack_n - 1) ? (stack_rect.height - si * h) : h
 			};
-			render_node(m, d, f, r);
-			stack_i++;
+			render_node(m, d, leaves[i], r);
 		}
-		i++;
 	}
+
+	free(leaves);
 }
 
 void apply_layout(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect, xcb_rectangle_t root_rect)
@@ -761,6 +778,7 @@ node_t *make_node(uint32_t id)
 	}
 	node_t *n = calloc(1, sizeof(node_t));
 	n->id = id;
+    n->insertion_seq = node_seq_counter++;
 	n->parent = n->first_child = n->second_child = NULL;
 	n->vacant = n->hidden = n->sticky = n->private = n->locked = n->marked = false;
 	n->split_ratio = split_ratio;
