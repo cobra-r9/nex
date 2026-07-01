@@ -747,11 +747,18 @@ void cmd_desktop(char **args, int num, FILE *rsp)
 			bool ret;
 			layout_t lyt;
 			cycle_dir_t cyc;
-			if (parse_cycle_direction(*args, &cyc)) {
-				ret = set_layout(trg.monitor, trg.desktop, (trg.desktop->user_layout + 1) % 2, true);
-			} else if (parse_layout(*args, &lyt)) {
-				ret = set_layout(trg.monitor, trg.desktop, lyt, true);
-			} else {
+            if (parse_cycle_direction(*args, &cyc)) {
+                layout_t cur = trg.desktop->user_layout;
+                layout_t next;
+                if (cyc == CYCLE_NEXT) {
+                    next = (cur + 1) % 3;
+                } else {
+                    next = (cur + 3 - 1) % 3;
+                }
+                ret = set_layout(trg.monitor, trg.desktop, next, true);
+            } else if (parse_layout(*args, &lyt)) {
+                ret = set_layout(trg.monitor, trg.desktop, lyt, true);
+            } else {
 				fail(rsp, "desktop %s: Invalid argument: '%s'.\n", *(args - 1), *args);
 				break;
 			}
