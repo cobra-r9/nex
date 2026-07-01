@@ -1,3 +1,8 @@
+// file : nex.c 
+
+
+// include the header files. 
+// systemwide headers.
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -12,6 +17,9 @@
 #include <sys/wait.h>
 #include <xcb/xinerama.h>
 #include <xcb/xcb_aux.h>
+
+
+// project spefic headers
 #include "types.h"
 #include "desktop.h"
 #include "monitor.h"
@@ -31,28 +39,28 @@
 
 
 
-xcb_connection_t *dpy;
-int default_screen, screen_width, screen_height;
-uint32_t clients_count;
-xcb_screen_t *screen;
-xcb_window_t root;
+xcb_connection_t *dpy = NULL;
+int default_screen = 0, screen_width = 0, screen_height = 0;
+uint32_t clients_count = 0;
+xcb_screen_t *screen = NULL;
+xcb_window_t root ;
 char config_path[MAXLEN];
 
-monitor_t *mon;
-monitor_t *mon_head;
-monitor_t *mon_tail;
-monitor_t *pri_mon;
-history_t *history_head;
-history_t *history_tail;
-history_t *history_needle;
-rule_t *rule_head;
-rule_t *rule_tail;
-stacking_list_t *stack_head;
-stacking_list_t *stack_tail;
-subscriber_list_t *subscribe_head;
-subscriber_list_t *subscribe_tail;
-pending_rule_t *pending_rule_head;
-pending_rule_t *pending_rule_tail;
+monitor_t *mon = NULL;
+monitor_t *mon_head = NULL;
+monitor_t *mon_tail = NULL;
+monitor_t *pri_mon = NULL;
+history_t *history_head = NULL;
+history_t *history_tail = NULL;
+history_t *history_needle = NULL;
+rule_t *rule_head = NULL;
+rule_t *rule_tail = NULL;
+stacking_list_t *stack_head = NULL;
+stacking_list_t *stack_tail = NULL;
+subscriber_list_t *subscribe_head = NULL;
+subscriber_list_t *subscribe_tail = NULL;
+pending_rule_t *pending_rule_head = NULL;
+pending_rule_t *pending_rule_tail = NULL;
 
 xcb_window_t meta_window;
 motion_recorder_t motion_recorder;
@@ -69,15 +77,26 @@ volatile sig_atomic_t running;
 bool restart;
 bool randr;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[argc +1]) {
+
+    // initialise a fd_sed, call it descriptors. We shall use it to create a set of file descriptors.
 	fd_set descriptors;
+
+    // initialise the socket_path.
 	char socket_path[MAXLEN];
+
+    // initialise the state_path, keep it 0.
 	char state_path[MAXLEN] = {0};
 	int run_level = 0;
 	config_path[0] = '\0';
+
+    // initilaise the file descriptors.
 	int sock_fd = -1, cli_fd, dpy_fd, max_fd, n;
-	struct sockaddr_un sock_address;
+
+    // initialise the socket address. 
+	struct sockaddr_un addr;
+
+    // initialise the message buffer. 
 	char msg[BUFSIZ] = {0};
 	xcb_generic_event_t *event;
 	char *end;
@@ -111,29 +130,44 @@ int main(int argc, char *argv[])
 		}
 	}
 
+    // if the config path is not provided, check for the environment variable. 
 	if (config_path[0] == '\0') {
 		char *config_home = getenv(CONFIG_HOME_ENV);
+
+        // if the environment variable is not equal to null, then we use it. 
 		if (config_home != NULL) {
 			snprintf(config_path, sizeof(config_path), "%s/%s/%s", config_home, WM_NAME, CONFIG_NAME);
+        // if else, we hardcore the config path. 
 		} else {
 			snprintf(config_path, sizeof(config_path), "%s/%s/%s/%s", getenv("HOME"), ".config", WM_NAME, CONFIG_NAME);
 		}
 	}
 
+
+
+    // connect to the X server. 
 	dpy = xcb_connect(NULL, &default_screen);
 
+    // if not connected to the xserver, then exit.
 	if (!check_connection(dpy)) {
 		exit(EXIT_FAILURE);
 	}
 
+    // load settings from settings.h
 	load_settings();
+
+    // load setup from nex.h
 	setup();
 
+    // if the state path is not a invalid string, then
 	if (state_path[0] != '\0') {
+        // restore the state path (restore.h)
 		restore_state(state_path);
+        // then unlink the state path.
 		unlink(state_path);
 	}
 
+    // get the file descriptor of the dpy.
 	dpy_fd = xcb_get_file_descriptor(dpy);
 
 	if (sock_fd == -1) {
@@ -149,8 +183,8 @@ int main(int argc, char *argv[])
 			free(host);
 		}
 
-		sock_address.sun_family = AF_UNIX;
-		if (snprintf(sock_address.sun_path, sizeof(sock_address.sun_path), "%s", socket_path) < 0) {
+		addr.sun_family = AF_UNIX;
+		if (snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_path) < 0) {
 			err("Couldn't write the socket path.\n");
 		}
 
@@ -162,7 +196,7 @@ int main(int argc, char *argv[])
 
 		unlink(socket_path);
 
-		if (bind(sock_fd, (struct sockaddr *) &sock_address, sizeof(sock_address)) == -1) {
+		if (bind(sock_fd, (struct sockaddr *) &addr, sizeof(addr)) == -1) {
 			err("Couldn't bind a name to the socket.\n");
 		}
 
@@ -354,31 +388,33 @@ void setup(void)
 	                  XCB_WINDOW_CLASS_INPUT_ONLY, XCB_COPY_FROM_PARENT, XCB_CW_EVENT_MASK, values);
 	xcb_icccm_set_wm_class(dpy, motion_recorder.id, sizeof(MOTION_RECORDER_IC), MOTION_RECORDER_IC);
 
-	xcb_atom_t net_atoms[] = {ewmh->_NET_SUPPORTED,
-	                          ewmh->_NET_SUPPORTING_WM_CHECK,
-	                          ewmh->_NET_DESKTOP_NAMES,
-	                          ewmh->_NET_DESKTOP_VIEWPORT,
-	                          ewmh->_NET_NUMBER_OF_DESKTOPS,
-	                          ewmh->_NET_CURRENT_DESKTOP,
-	                          ewmh->_NET_CLIENT_LIST,
-	                          ewmh->_NET_ACTIVE_WINDOW,
-	                          ewmh->_NET_CLOSE_WINDOW,
-	                          ewmh->_NET_WM_STRUT_PARTIAL,
-	                          ewmh->_NET_WM_DESKTOP,
-	                          ewmh->_NET_WM_STATE,
-	                          ewmh->_NET_WM_STATE_HIDDEN,
-	                          ewmh->_NET_WM_STATE_FULLSCREEN,
-	                          ewmh->_NET_WM_STATE_BELOW,
-	                          ewmh->_NET_WM_STATE_ABOVE,
-	                          ewmh->_NET_WM_STATE_STICKY,
-	                          ewmh->_NET_WM_STATE_DEMANDS_ATTENTION,
-	                          ewmh->_NET_WM_WINDOW_TYPE,
-	                          ewmh->_NET_WM_WINDOW_TYPE_DOCK,
-	                          ewmh->_NET_WM_WINDOW_TYPE_DESKTOP,
-	                          ewmh->_NET_WM_WINDOW_TYPE_NOTIFICATION,
-	                          ewmh->_NET_WM_WINDOW_TYPE_DIALOG,
-	                          ewmh->_NET_WM_WINDOW_TYPE_UTILITY,
-	                          ewmh->_NET_WM_WINDOW_TYPE_TOOLBAR};
+	xcb_atom_t net_atoms[] = {
+        ewmh->_NET_SUPPORTED,
+	    ewmh->_NET_SUPPORTING_WM_CHECK,
+	    ewmh->_NET_DESKTOP_NAMES,
+	    ewmh->_NET_DESKTOP_VIEWPORT,
+	    ewmh->_NET_NUMBER_OF_DESKTOPS,
+	    ewmh->_NET_CURRENT_DESKTOP,
+	    ewmh->_NET_CLIENT_LIST,
+	    ewmh->_NET_ACTIVE_WINDOW,
+	    ewmh->_NET_CLOSE_WINDOW,
+	    ewmh->_NET_WM_STRUT_PARTIAL,
+	    ewmh->_NET_WM_DESKTOP,
+	    ewmh->_NET_WM_STATE,
+	    ewmh->_NET_WM_STATE_HIDDEN,
+	    ewmh->_NET_WM_STATE_FULLSCREEN,
+	    ewmh->_NET_WM_STATE_BELOW,
+	    ewmh->_NET_WM_STATE_ABOVE,
+	    ewmh->_NET_WM_STATE_STICKY,
+	    ewmh->_NET_WM_STATE_DEMANDS_ATTENTION,
+	    ewmh->_NET_WM_WINDOW_TYPE,
+	    ewmh->_NET_WM_WINDOW_TYPE_DOCK,
+	    ewmh->_NET_WM_WINDOW_TYPE_DESKTOP,
+	    ewmh->_NET_WM_WINDOW_TYPE_NOTIFICATION,
+	    ewmh->_NET_WM_WINDOW_TYPE_DIALOG,
+	    ewmh->_NET_WM_WINDOW_TYPE_UTILITY,
+	    ewmh->_NET_WM_WINDOW_TYPE_TOOLBAR
+    };
 
 	xcb_ewmh_set_supported(ewmh, default_screen, LENGTH(net_atoms), net_atoms);
 	ewmh_set_supporting(meta_window);
