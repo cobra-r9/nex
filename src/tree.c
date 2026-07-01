@@ -16,6 +16,9 @@
 #include "window.h"
 #include "tree.h"
 
+/* TODO: move to settings.c/settings.h as a real user-configurable setting */
+static const double master_ratio = 0.55;
+
 void arrange(monitor_t *m, desktop_t *d)
 {
 	if (d->root == NULL) {
@@ -43,7 +46,117 @@ void arrange(monitor_t *m, desktop_t *d)
 		rect.height -= d->window_gap;
 	}
 
-	apply_layout(m, d, d->root, rect, rect);
+	if (d->layout == LAYOUT_TALL) {
+		apply_master_stack(m, d, rect);
+	} else {
+		apply_layout(m, d, d->root, rect, rect);
+	}
+}
+
+void render_node(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect)
+{
+	n->rectangle = rect;
+
+	if (n->presel != NULL) {
+		draw_presel_feedback(m, d, n);
+	}
+
+	if (n->client == NULL) {
+		return;
+	}
+
+	unsigned int bw;
+	bool the_only_window = !m->prev && !m->next && d->root->client;
+	if ((borderless_monocle && d->layout == LAYOUT_MONOCLE && IS_TILED(n->client))
+	    || (borderless_singleton && the_only_window)
+	    || n->client->state == STATE_FULLSCREEN) {
+		bw = 0;
+	} else {
+		bw = n->client->border_width;
+	}
+
+	xcb_rectangle_t r;
+	xcb_rectangle_t cr = get_window_rectangle(n);
+	client_state_t s = n->client->state;
+	/* tiled and pseudo-tiled clients */
+	if (s == STATE_TILED || s == STATE_PSEUDO_TILED) {
+		int wg = (gapless_monocle && d->layout == LAYOUT_MONOCLE ? 0 : d->window_gap);
+		r = rect;
+		int bleed = wg + 2 * bw;
+		r.width = (bleed < r.width ? r.width - bleed : 1);
+		r.height = (bleed < r.height ? r.height - bleed : 1);
+		/* pseudo-tiled clients */
+		if (s == STATE_PSEUDO_TILED) {
+			xcb_rectangle_t f = n->client->floating_rectangle;
+			r.width = MIN(r.width, f.width);
+			r.height = MIN(r.height, f.height);
+			if (center_pseudo_tiled) {
+				r.x = rect.x - bw + (rect.width - wg - r.width) / 2;
+				r.y = rect.y - bw + (rect.height - wg - r.height) / 2;
+			}
+		}
+		n->client->tiled_rectangle = r;
+	/* floating clients */
+	} else if (s == STATE_FLOATING) {
+		r = n->client->floating_rectangle;
+	/* fullscreen clients */
+	} else {
+		r = m->rectangle;
+		n->client->tiled_rectangle = r;
+	}
+
+	apply_size_hints(n->client, &r.width, &r.height);
+
+	if (!rect_eq(r, cr)) {
+		window_move_resize(n->id, r.x, r.y, r.width, r.height);
+		if (!grabbing) {
+			put_status(SBSC_MASK_NODE_GEOMETRY, "node_geometry 0x%08X 0x%08X 0x%08X %ux%u+%i+%i\n", m->id, d->id, n->id, r.width, r.height, r.x, r.y);
+		}
+	}
+
+	window_border_width(n->id, bw);
+}
+
+void apply_master_stack(monitor_t *m, desktop_t *d, xcb_rectangle_t rect)
+{
+	int n_leaves = 0;
+	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
+		if (!f->hidden && f->client != NULL) {
+			n_leaves++;
+		}
+	}
+	if (n_leaves == 0) {
+		return;
+	}
+
+	unsigned int master_width = (n_leaves == 1) ? rect.width : (unsigned int) (rect.width * master_ratio);
+	xcb_rectangle_t master_rect = {rect.x, rect.y, master_width, rect.height};
+	xcb_rectangle_t stack_rect  = {(int16_t) (rect.x + master_width), rect.y,
+	                                rect.width - master_width, rect.height};
+
+	int i = 0;
+	int stack_n = n_leaves - 1;
+	int stack_i = 0;
+
+	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
+		if (f->hidden || f->client == NULL) {
+			continue;
+		}
+		if (i == 0) {
+			render_node(m, d, f, master_rect);
+		} else {
+			unsigned int h = stack_rect.height / stack_n;
+			xcb_rectangle_t r = {
+				stack_rect.x,
+				(int16_t) (stack_rect.y + stack_i * h),
+				stack_rect.width,
+				(stack_i == stack_n - 1) ? (stack_rect.height - stack_i * h) : h
+			};
+			render_node(m, d, f, r);
+			stack_i++;
+		}
+		i++;
+	}
 }
 
 void apply_layout(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect, xcb_rectangle_t root_rect)
@@ -52,69 +165,8 @@ void apply_layout(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect, x
 		return;
 	}
 
-	n->rectangle = rect;
-
-	if (n->presel != NULL) {
-		draw_presel_feedback(m, d, n);
-	}
-
 	if (is_leaf(n)) {
-
-		if (n->client == NULL) {
-			return;
-		}
-
-		unsigned int bw;
-		bool the_only_window = !m->prev && !m->next && d->root->client;
-		if ((borderless_monocle && d->layout == LAYOUT_MONOCLE && IS_TILED(n->client))
-		    || (borderless_singleton && the_only_window)
-		    || n->client->state == STATE_FULLSCREEN) {
-			bw = 0;
-		} else {
-			bw = n->client->border_width;
-		}
-
-		xcb_rectangle_t r;
-		xcb_rectangle_t cr = get_window_rectangle(n);
-		client_state_t s = n->client->state;
-		/* tiled and pseudo-tiled clients */
-		if (s == STATE_TILED || s == STATE_PSEUDO_TILED) {
-			int wg = (gapless_monocle && d->layout == LAYOUT_MONOCLE ? 0 : d->window_gap);
-			r = rect;
-			int bleed = wg + 2 * bw;
-			r.width = (bleed < r.width ? r.width - bleed : 1);
-			r.height = (bleed < r.height ? r.height - bleed : 1);
-			/* pseudo-tiled clients */
-			if (s == STATE_PSEUDO_TILED) {
-				xcb_rectangle_t f = n->client->floating_rectangle;
-				r.width = MIN(r.width, f.width);
-				r.height = MIN(r.height, f.height);
-				if (center_pseudo_tiled) {
-					r.x = rect.x - bw + (rect.width - wg - r.width) / 2;
-					r.y = rect.y - bw + (rect.height - wg - r.height) / 2;
-				}
-			}
-			n->client->tiled_rectangle = r;
-		/* floating clients */
-		} else if (s == STATE_FLOATING) {
-			r = n->client->floating_rectangle;
-		/* fullscreen clients */
-		} else {
-			r = m->rectangle;
-			n->client->tiled_rectangle = r;
-		}
-
-		apply_size_hints(n->client, &r.width, &r.height);
-
-		if (!rect_eq(r, cr)) {
-			window_move_resize(n->id, r.x, r.y, r.width, r.height);
-			if (!grabbing) {
-				put_status(SBSC_MASK_NODE_GEOMETRY, "node_geometry 0x%08X 0x%08X 0x%08X %ux%u+%i+%i\n", m->id, d->id, n->id, r.width, r.height, r.x, r.y);
-			}
-		}
-
-		window_border_width(n->id, bw);
-
+		render_node(m, d, n, rect);
 	} else {
 		xcb_rectangle_t first_rect;
 		xcb_rectangle_t second_rect;
@@ -2283,3 +2335,4 @@ void regenerate_ids_in(node_t *n)
 	DEF_FLAG_COUNT(private)
 	DEF_FLAG_COUNT(locked)
 #undef DEF_FLAG_COUNT
+

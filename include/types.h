@@ -116,7 +116,8 @@ typedef enum {
 
 typedef enum {
 	LAYOUT_TILED,
-	LAYOUT_MONOCLE
+	LAYOUT_MONOCLE,
+    LAYOUT_TALL
 } layout_t;
 
 typedef enum {

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include "parse.h"
+#include "types.h"
 
 bool parse_bool(char *value, bool *b)
 {
@@ -49,7 +50,10 @@ bool parse_layout(char *s, layout_t *l)
 	} else if (streq("tiled", s)) {
 		*l = LAYOUT_TILED;
 		return true;
-	}
+	} else if (streq("tall", s)) {
+        *l = LAYOUT_TALL;
+        return true;
+    }
 	return false;
 }
 

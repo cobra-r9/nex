@@ -6,6 +6,7 @@
 #define MIN_HEIGHT  32
 
 void arrange(monitor_t *m, desktop_t *d);
+void apply_master_stack(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
 void apply_layout(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect, xcb_rectangle_t root_rect);
 presel_t *make_presel(void);
 bool set_type(node_t *n, split_type_t typ);
