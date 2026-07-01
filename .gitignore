@@ -1,0 +1,9 @@
+# ignore everything in obj folder.
+build/
+
+# ignore all the swap files. 
+*.swp
+
+# ignore the compiled binary.
+# you gotta change this as per your binary name. 
+
