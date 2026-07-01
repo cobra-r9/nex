@@ -74,7 +74,7 @@ reset:
 	@rm -rf $(OBJ_DIR)
 
 # For arch makepkg -si helper.
-purge: clean
+purge:
 	@echo "Cleaning makepkg residues..."
 	@rm -rf pkg
 	@rm -f *.tar.zst
