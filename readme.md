@@ -29,7 +29,7 @@ The outlined architecture is the following:
 sxhkd  -------->  nexl  <------>  nex
 ```
 
->[!IMPORATANT]
+>[!IMPORTANT]
 > **In future**, I have a plan to integrate the keybind funtionality into nex itself, as well as additional to `shell script` configuration file, I may also add a `lua` configuration functionality. Currently, this is just a project for **learning C and X11 Windowing**. I personally argue that, though the X11 protocol may be outdated compared to Wayland, the underlying C implications are not outdated. They are essential for anyone to understand how C actually works. 
 
 ### Configuration
