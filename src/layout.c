@@ -29,7 +29,7 @@ static node_t **collect_ordered_leaves(desktop_t *d, int *out_count) {
 	node_t **leaves = malloc(capacity * sizeof(node_t *));
 
 	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
-		if (f->hidden || f->client == NULL || f->vacant) {
+		if (f->hidden || f->client == NULL) {
 			continue;
 		}
 		if (count == capacity) {
@@ -126,6 +126,16 @@ void layout_tall_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect) {
 	int n_leaves;
 	node_t **leaves = collect_ordered_leaves(d, &n_leaves);
 
+    int tiled_n = 0;
+    for (int i = 0; i < n_leaves; i++) {
+        if (leaves[i]->vacant) {
+            render_node(m, d, leaves[i], rect);
+        } else {
+            leaves[tiled_n++] = leaves[i];
+        }
+    }
+    n_leaves = tiled_n;
+
 	if (n_leaves == 0) {
 		free(leaves);
 		return;
@@ -170,6 +180,16 @@ void layout_tall_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect) {
 void layout_wide_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect) {
 	int n_leaves;
 	node_t **leaves = collect_ordered_leaves(d, &n_leaves);
+
+    int tiled_n = 0;
+    for (int i = 0; i < n_leaves; i++) {
+        if (leaves[i]->vacant) {
+            render_node(m, d, leaves[i], rect);
+        } else {
+            leaves[tiled_n++] = leaves[i];
+        }
+    }
+    n_leaves = tiled_n;
 
 	if (n_leaves == 0) {
 		free(leaves);
