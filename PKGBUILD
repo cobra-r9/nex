@@ -1,6 +1,6 @@
 # Maintainer: cobra-r9 <cobra.rev.9@gmail.com>
 pkgname=nex
-pkgver=0.1.1
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="An enhanced tiling WM for X11 - a fork of bspwm"
 arch=('x86_64')
