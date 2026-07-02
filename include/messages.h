@@ -1,5 +1,4 @@
-#ifndef NEX_MESSAGES_H
-#define NEX_MESSAGES_H
+#pragma once
 
 #include "types.h"
 #include "subscribe.h"
@@ -20,4 +19,4 @@ void get_setting(coordinates_t loc, char *name, FILE* rsp);
 void handle_failure(int code, char *src, char *val, FILE *rsp);
 void fail(FILE *rsp, char *fmt, ...);
 
-#endif
+

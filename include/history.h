@@ -1,5 +1,4 @@
-#ifndef NEX_HISTORY_H
-#define NEX_HISTORY_H
+#pragma once
 
 #include "types.h"
 
@@ -20,4 +19,4 @@ bool history_find_newest_monitor(coordinates_t *ref, coordinates_t *dst, monitor
 bool history_find_monitor(history_dir_t hdi, coordinates_t *ref, coordinates_t *dst, monitor_select_t *sel);
 uint32_t history_rank(node_t *n);
 
-#endif
+

@@ -1,5 +1,5 @@
-#ifndef NEX_QUERY_H
-#define NEX_QUERY_H
+#pragma once 
+#include "types.h"
 
 #define PTH_TOK  "/"
 
@@ -67,4 +67,4 @@ bool node_matches(coordinates_t *loc, coordinates_t *ref, node_select_t *sel);
 bool desktop_matches(coordinates_t *loc, coordinates_t *ref, desktop_select_t *sel);
 bool monitor_matches(coordinates_t *loc, __attribute__((unused)) coordinates_t *ref, monitor_select_t *sel);
 
-#endif
+

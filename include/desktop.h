@@ -1,5 +1,6 @@
-#ifndef NEX_DESKTOP_H
-#define NEX_DESKTOP_H
+#pragma once
+
+#include "types.h"
 
 #define DEFAULT_DESK_NAME    "Desktop"
 
@@ -22,4 +23,4 @@ void show_desktop(desktop_t *d);
 void hide_desktop(desktop_t *d);
 bool is_urgent(desktop_t *d);
 
-#endif
+

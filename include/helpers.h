@@ -1,5 +1,4 @@
-#ifndef NEX_HELPERS_H
-#define NEX_HELPERS_H
+#pragma once 
 
 #include <xcb/xcb.h>
 #include <stdarg.h>
@@ -76,4 +75,4 @@ struct tokenize_state {
 };
 char *tokenize_with_escape(struct tokenize_state *state, const char *s, char sep);
 
-#endif
+

@@ -1,5 +1,4 @@
-#ifndef NEX_PARSE_H
-#define NEX_PARSE_H
+#pragma once
 
 #include "types.h"
 #include "subscribe.h"
@@ -40,4 +39,4 @@ bool parse_monitor_modifiers(char *desc, monitor_select_t *sel);
 bool parse_desktop_modifiers(char *desc, desktop_select_t *sel);
 bool parse_node_modifiers(char *desc, node_select_t *sel);
 
-#endif
+

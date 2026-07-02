@@ -1,8 +1,7 @@
-#ifndef NEX_EVENTS_H
-#define NEX_EVENTS_H
-
+#pragma once
 #include <xcb/xcb.h>
 #include <xcb/xcb_event.h>
+#include "types.h"
 
 #define ERROR_CODE_BAD_WINDOW  3
 
@@ -25,4 +24,4 @@ void handle_state(monitor_t *m, desktop_t *d, node_t *n, xcb_atom_t state, unsig
 void mapping_notify(xcb_generic_event_t *evt);
 void process_error(xcb_generic_event_t *evt);
 
-#endif
+

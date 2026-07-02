@@ -1,5 +1,6 @@
-#ifndef NEX_STACK_H
-#define NEX_STACK_H
+#pragma once
+
+#include "types.h"
 
 stacking_list_t *make_stack(node_t *n);
 void stack_insert_after(stacking_list_t *a, node_t *n);
@@ -14,4 +15,4 @@ void stack(desktop_t *d, node_t *n, bool focused);
 void restack_presel_feedbacks(desktop_t *d);
 void restack_presel_feedbacks_in(node_t *r, node_t *n);
 
-#endif
+

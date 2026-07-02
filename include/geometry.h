@@ -1,8 +1,8 @@
-#ifndef NEX_GEOMETRY_H
-#define NEX_GEOMETRY_H
+#pragma once
 
 #include <stdbool.h>
 #include <xcb/xcb.h>
+#include "types.h"
 
 bool is_inside(xcb_point_t p, xcb_rectangle_t r);
 bool contains(xcb_rectangle_t a, xcb_rectangle_t b);
@@ -12,4 +12,4 @@ bool on_dir_side(xcb_rectangle_t r1, xcb_rectangle_t r2, direction_t dir);
 bool rect_eq(xcb_rectangle_t a, xcb_rectangle_t b);
 int rect_cmp(xcb_rectangle_t r1, xcb_rectangle_t r2);
 
-#endif
+

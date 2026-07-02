@@ -1,5 +1,4 @@
-#ifndef NEX_SETTINGS_H
-#define NEX_SETTINGS_H
+#pragma once
 
 #include "types.h"
 
@@ -94,4 +93,4 @@ extern bool merge_overlapping_monitors;
 void run_config(int run_level);
 void load_settings(void);
 
-#endif
+

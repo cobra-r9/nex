@@ -1,6 +1,6 @@
-#ifndef NEX_SUBSCRIBE_H
-#define NEX_SUBSCRIBE_H
+#pragma once
 
+#include "types.h"
 #define FIFO_TEMPLATE  "nex_fifo.XXXXXX"
 
 typedef enum {
@@ -48,4 +48,4 @@ void put_status(subscriber_mask_t mask, ...);
  * writable. */
 void prune_dead_subscribers(void);
 
-#endif
+

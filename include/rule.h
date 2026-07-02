@@ -1,5 +1,6 @@
-#ifndef NEX_RULE_H
-#define NEX_RULE_H
+#pragma once
+
+#include "types.h"
 
 #define MATCH_ANY  "*"
 #define CSQ_BLK    " =,\n"
@@ -28,4 +29,4 @@ void parse_rule_consequence(int fd, rule_consequence_t *csq);
 void parse_key_value(char *key, char *value, rule_consequence_t *csq);
 void list_rules(FILE *rsp);
 
-#endif
+

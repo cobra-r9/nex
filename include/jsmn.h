@@ -1,6 +1,4 @@
-#ifndef __JSMN_H_
-#define __JSMN_H_
-
+#pragma once
 #include <stddef.h>
 
 #ifdef __cplusplus
@@ -73,4 +71,4 @@ int jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 }
 #endif
 
-#endif /* __JSMN_H_ */
+

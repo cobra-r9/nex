@@ -1,5 +1,4 @@
-#ifndef NEX_NEX_H
-#define NEX_NEX_H
+#pragma once
 
 #include <signal.h>
 #include "types.h"
@@ -73,4 +72,4 @@ bool check_connection (xcb_connection_t *dpy);
 void sig_handler(int sig);
 uint32_t get_color_pixel(const char *color);
 
-#endif
+

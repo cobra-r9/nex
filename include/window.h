@@ -1,5 +1,4 @@
-#ifndef NEX_WINDOW_H
-#define NEX_WINDOW_H
+#pragma once
 
 #include <stdarg.h>
 #include <xcb/xcb.h>
@@ -53,4 +52,4 @@ void set_atom(xcb_window_t win, xcb_atom_t atom, uint32_t value);
 void send_client_message(xcb_window_t win, xcb_atom_t property, xcb_atom_t value);
 bool window_exists(xcb_window_t win);
 
-#endif
+

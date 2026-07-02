@@ -1,7 +1,8 @@
-#ifndef NEX_RESTORE_H
-#define NEX_RESTORE_H
+#pragma once
+
 
 #include "jsmn.h"
+#include "types.h"
 
 bool restore_state(const char *file_path);
 monitor_t *restore_monitor(jsmntok_t **t, char *json);
@@ -19,4 +20,4 @@ void restore_coordinates(coordinates_t *loc, jsmntok_t **t, char *json);
 void restore_stack(jsmntok_t **t, char *json);
 bool keyeq(char *s, jsmntok_t *key, char *json);
 
-#endif
+

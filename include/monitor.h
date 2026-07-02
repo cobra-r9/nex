@@ -1,5 +1,5 @@
-#ifndef NEX_MONITOR_H
-#define NEX_MONITOR_H
+#pragma once 
+#include "types.h"
 
 #define DEFAULT_MON_NAME     "MONITOR"
 
@@ -24,4 +24,4 @@ monitor_t *nearest_monitor(monitor_t *m, direction_t dir, monitor_select_t *sel)
 bool find_any_monitor(coordinates_t *ref, coordinates_t *dst, monitor_select_t *sel);
 bool update_monitors(void);
 
-#endif
+

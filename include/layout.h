@@ -1,5 +1,4 @@
-#ifndef NEX_LAYOUT_H
-#define NEX_LAYOUT_H
+#pragma once
 
 #include "types.h"
 
@@ -18,4 +17,4 @@ const char *layout_str(layout_t l);
 char layout_chr(layout_t l);
 const char *layout_variant_str(layout_variant_t v);
 
-#endif
+

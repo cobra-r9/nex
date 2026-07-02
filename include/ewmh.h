@@ -1,7 +1,7 @@
-#ifndef NEX_EWMH_H
-#define NEX_EWMH_H
+#pragma once
 
 #include <xcb/xcb_ewmh.h>
+#include "types.h"
 
 extern xcb_ewmh_connection_t *ewmh;
 
@@ -20,4 +20,4 @@ void ewmh_update_client_list(bool stacking);
 void ewmh_wm_state_update(node_t *n);
 void ewmh_set_supporting(xcb_window_t win);
 
-#endif
+

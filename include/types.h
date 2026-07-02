@@ -1,5 +1,5 @@
-#ifndef NEX_TYPES_H
-#define NEX_TYPES_H
+#pragma once
+
 #include <stdbool.h>
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
@@ -388,4 +388,4 @@ struct pending_rule_t {
 	pending_rule_t *next;
 };
 
-#endif
+
