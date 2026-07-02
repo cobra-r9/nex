@@ -21,12 +21,15 @@ static int cmp_leaf_seq(const void *a, const void *b) {
 	return 0;
 }
 
-/* Single traversal, growable buffer, sorted by insertion_seq (oldest
- * first -> master slot). Caller frees the returned array. */
 static node_t **collect_ordered_leaves(desktop_t *d, int *out_count) {
 	int capacity = 16;
 	int count = 0;
 	node_t **leaves = malloc(capacity * sizeof(node_t *));
+
+	if (leaves == NULL) {
+		*out_count = 0;
+		return NULL;
+	}
 
 	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
 		if (f->hidden || f->client == NULL) {
@@ -34,7 +37,13 @@ static node_t **collect_ordered_leaves(desktop_t *d, int *out_count) {
 		}
 		if (count == capacity) {
 			capacity *= 2;
-			leaves = realloc(leaves, capacity * sizeof(node_t *));
+			node_t **rleaves = realloc(leaves, capacity * sizeof(node_t *));
+			if (rleaves == NULL) {
+				free(leaves);
+				*out_count = 0;
+				return NULL;
+			}
+			leaves = rleaves;
 		}
 		leaves[count++] = f;
 	}
