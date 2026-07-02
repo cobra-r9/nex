@@ -18,6 +18,7 @@
 #define WINDOW_GAP           6
 #define BORDER_WIDTH         1
 #define SPLIT_RATIO          0.5
+#define MASTER_RATIO         0.55
 #define AUTOMATIC_SCHEME     SCHEME_LONGEST_SIDE
 #define REMOVAL_ADJUSTMENT   true
 
@@ -57,6 +58,7 @@ extern padding_t monocle_padding;
 extern int window_gap;
 extern unsigned int border_width;
 extern double split_ratio;
+extern double master_ratio;
 extern child_polarity_t initial_polarity;
 extern automatic_scheme_t automatic_scheme;
 extern bool removal_adjustment;

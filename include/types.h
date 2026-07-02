@@ -115,10 +115,16 @@ typedef enum {
 } pointer_action_t;
 
 typedef enum {
-	LAYOUT_TILED,
+	LAYOUT_BINARY,
 	LAYOUT_MONOCLE,
-    LAYOUT_TALL
+	LAYOUT_TALL,
+	LAYOUT_WIDE
 } layout_t;
+
+typedef enum {
+	VARIANT_NORMAL,
+	VARIANT_REVERSED
+} layout_variant_t;
 
 typedef enum {
 	FLIP_HORIZONTAL,
@@ -180,8 +186,12 @@ typedef struct {
 	option_bool_t local;
 	option_bool_t tiled;
 	option_bool_t monocle;
+	option_bool_t tall;
+	option_bool_t wide;
 	option_bool_t user_tiled;
 	option_bool_t user_monocle;
+	option_bool_t user_tall;
+	option_bool_t user_wide;
 } desktop_select_t;
 
 typedef struct {
@@ -263,6 +273,8 @@ struct desktop_t {
 	uint32_t id;
 	layout_t layout;
 	layout_t user_layout;
+	layout_variant_t layout_variant;
+	double master_ratio;
 	node_t *root;
 	node_t *focus;
 	desktop_t *prev;

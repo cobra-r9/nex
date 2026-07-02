@@ -42,18 +42,31 @@ bool parse_split_mode(char *s, split_mode_t *m)
 	return false;
 }
 
-bool parse_layout(char *s, layout_t *l)
-{
+bool parse_layout(char *s, layout_t *l) {
 	if (streq("monocle", s)) {
 		*l = LAYOUT_MONOCLE;
 		return true;
-	} else if (streq("tiled", s)) {
-		*l = LAYOUT_TILED;
+	} else if (streq("tiled", s) || streq("binary", s)) {
+		*l = LAYOUT_BINARY;
 		return true;
 	} else if (streq("tall", s)) {
-        *l = LAYOUT_TALL;
-        return true;
-    }
+		*l = LAYOUT_TALL;
+		return true;
+	} else if (streq("wide", s)) {
+		*l = LAYOUT_WIDE;
+		return true;
+	}
+	return false;
+}
+
+bool parse_layout_variant(char *s, layout_variant_t *v) {
+	if (streq("normal", s)) {
+		*v = VARIANT_NORMAL;
+		return true;
+	} else if (streq("reversed", s)) {
+		*v = VARIANT_REVERSED;
+		return true;
+	}
 	return false;
 }
 
@@ -525,8 +538,12 @@ bool parse_desktop_modifiers(char *desc, desktop_select_t *sel)
 		GET_MOD(local)
 		GET_MOD(tiled)
 		GET_MOD(monocle)
+		GET_MOD(tall)
+		GET_MOD(wide)
 		GET_MOD(user_tiled)
 		GET_MOD(user_monocle)
+		GET_MOD(user_tall)
+		GET_MOD(user_wide)
 		} else {
 			return false;
 		}
@@ -576,3 +593,4 @@ bool parse_node_modifiers(char *desc, node_select_t *sel)
 }
 
 #undef GET_MOD
+

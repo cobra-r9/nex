@@ -11,6 +11,7 @@
 #include "desktop.h"
 #include "subscribe.h"
 #include "settings.h"
+#include "layout.h"
 
 bool activate_desktop(monitor_t *m, desktop_t *d)
 {
@@ -118,7 +119,7 @@ bool set_layout(monitor_t *m, desktop_t *d, layout_t l, bool user)
 			arrange(m, d);
 		}
 
-		put_status(SBSC_MASK_DESKTOP_LAYOUT, "desktop_layout 0x%08X 0x%08X %s\n", m->id, d->id, LAYOUT_STR(d->layout));
+		put_status(SBSC_MASK_DESKTOP_LAYOUT, "desktop_layout 0x%08X 0x%08X %s\n", m->id, d->id, layout_str(d->layout));
 
 		if (d == m->desk) {
 			put_status(SBSC_MASK_REPORT);
@@ -219,8 +220,10 @@ desktop_t *make_desktop(const char *name, uint32_t id)
 	}
 	d->prev = d->next = NULL;
 	d->root = d->focus = NULL;
-	d->user_layout = LAYOUT_TILED;
-	d->layout = single_monocle ? LAYOUT_MONOCLE : LAYOUT_TILED;
+	d->user_layout = LAYOUT_BINARY;
+	d->layout = single_monocle ? LAYOUT_MONOCLE : LAYOUT_BINARY;
+	d->layout_variant = VARIANT_NORMAL;
+	d->master_ratio = master_ratio;
 	d->padding = (padding_t) PADDING;
 	d->window_gap = window_gap;
 	d->border_width = border_width;

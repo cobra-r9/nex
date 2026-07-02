@@ -6,11 +6,11 @@
 #define MIN_HEIGHT  32
 
 void arrange(monitor_t *m, desktop_t *d);
-void apply_master_stack(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
-void apply_layout(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect, xcb_rectangle_t root_rect);
+void render_node(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect);
 presel_t *make_presel(void);
 bool set_type(node_t *n, split_type_t typ);
 bool set_ratio(node_t *n, double rat);
+bool set_master_ratio(desktop_t *d, double rat);
 void presel_dir(monitor_t *m, desktop_t *d, node_t *n, direction_t dir);
 void presel_ratio(monitor_t *m, desktop_t *d, node_t *n, double ratio);
 void cancel_presel(monitor_t *m, desktop_t *d, node_t *n);
@@ -24,6 +24,12 @@ bool focus_node(monitor_t *m, desktop_t *d, node_t *n);
 void hide_node(desktop_t *d, node_t *n);
 void show_node(desktop_t *d, node_t *n);
 node_t *make_node(uint32_t id);
+/* Bumps the internal insertion_seq counter so it stays past any value
+ * restored from a saved tree, e.g. bspc wm --restore-state. Without this,
+ * a node created after a restore could get a lower insertion_seq than a
+ * restored node, jumping into the master slot in LAYOUT_TALL/LAYOUT_WIDE
+ * ahead of a node that was actually there first. */
+void seed_node_seq_counter(uint32_t seq);
 client_t *make_client(void);
 void initialize_client(node_t *n);
 bool is_focusable(node_t *n);
@@ -98,5 +104,7 @@ void regenerate_ids_in(node_t *n);
 unsigned int sticky_count(node_t *n);
 unsigned int private_count(node_t *n);
 unsigned int locked_count(node_t *n);
+
+
 
 

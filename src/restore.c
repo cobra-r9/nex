@@ -291,6 +291,8 @@ desktop_t *restore_desktop(jsmntok_t **t, char *json)
 		RESTORE_UINT(id, &d->id)
 		RESTORE_ANY(layout, &d->layout, parse_layout)
 		RESTORE_ANY(userLayout, &d->user_layout, parse_layout)
+		RESTORE_ANY(layoutVariant, &d->layout_variant, parse_layout_variant)
+		RESTORE_DOUBLE(masterRatio, &d->master_ratio)
 		RESTORE_INT(windowGap, &d->window_gap)
 		RESTORE_UINT(borderWidth, &d->border_width)
 		} else if (keyeq("focusedNodeId", *t, json)) {
@@ -334,6 +336,7 @@ node_t *restore_node(jsmntok_t **t, char *json)
 				(*t)++;
 				sscanf(json + (*t)->start, "%u", &n->id);
 			RESTORE_ANY(splitType, &n->split_type, parse_split_type)
+			RESTORE_UINT(insertionSeq, &n->insertion_seq)
 			RESTORE_DOUBLE(splitRatio, &n->split_ratio)
 			RESTORE_BOOL(vacant, &n->vacant)
 			RESTORE_BOOL(hidden, &n->hidden)
@@ -379,6 +382,8 @@ node_t *restore_node(jsmntok_t **t, char *json)
 			}
 			(*t)++;
 		}
+
+		seed_node_seq_counter(n->insertion_seq);
 
 		return n;
 	}

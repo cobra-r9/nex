@@ -1,3 +1,6 @@
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -15,14 +18,11 @@
 #include "stack.h"
 #include "window.h"
 #include "tree.h"
+#include "layout.h"
 
-/* TODO: move to settings.c/settings.h as a real user-configurable setting */
-static const double master_ratio = 0.55;
 static uint32_t node_seq_counter = 0;
 
-
-void arrange(monitor_t *m, desktop_t *d)
-{
+void arrange(monitor_t *m, desktop_t *d) {
 	if (d->root == NULL) {
 		return;
 	}
@@ -48,10 +48,19 @@ void arrange(monitor_t *m, desktop_t *d)
 		rect.height -= d->window_gap;
 	}
 
-	if (d->layout == LAYOUT_TALL) {
-		apply_master_stack(m, d, rect);
-	} else {
-		apply_layout(m, d, d->root, rect, rect);
+	switch (d->layout) {
+		case LAYOUT_BINARY:
+			layout_binary_arrange(m, d, rect);
+			break;
+		case LAYOUT_MONOCLE:
+			layout_monocle_arrange(m, d, rect);
+			break;
+		case LAYOUT_TALL:
+			layout_tall_arrange(m, d, rect);
+			break;
+		case LAYOUT_WIDE:
+			layout_wide_arrange(m, d, rect);
+			break;
 	}
 }
 
@@ -119,113 +128,6 @@ void render_node(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect)
 	window_border_width(n->id, bw);
 }
 
-static int cmp_leaf_seq(const void *a, const void *b)
-{
-	node_t *na = *(node_t * const *) a;
-	node_t *nb = *(node_t * const *) b;
-	if (na->insertion_seq < nb->insertion_seq) return -1;
-	if (na->insertion_seq > nb->insertion_seq) return 1;
-	return 0;
-}
-
-void apply_master_stack(monitor_t *m, desktop_t *d, xcb_rectangle_t rect)
-{
-	int n_leaves = 0;
-	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
-		if (!f->hidden && f->client != NULL) {
-			n_leaves++;
-		}
-	}
-	if (n_leaves == 0) {
-		return;
-	}
-
-	node_t **leaves = malloc(n_leaves * sizeof(node_t *));
-	int idx = 0;
-	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
-		if (!f->hidden && f->client != NULL) {
-			leaves[idx++] = f;
-		}
-	}
-
-	qsort(leaves, n_leaves, sizeof(node_t *), cmp_leaf_seq);
-
-	unsigned int master_width = (n_leaves == 1) ? rect.width : (unsigned int) (rect.width * master_ratio);
-	xcb_rectangle_t master_rect = {rect.x, rect.y, master_width, rect.height};
-	xcb_rectangle_t stack_rect  = {(int16_t) (rect.x + master_width), rect.y,
-	                                rect.width - master_width, rect.height};
-
-	int stack_n = n_leaves - 1;
-
-	for (int i = 0; i < n_leaves; i++) {
-		if (i == 0) {
-			render_node(m, d, leaves[i], master_rect);
-		} else {
-			int si = i - 1;
-			unsigned int h = stack_rect.height / stack_n;
-			xcb_rectangle_t r = {
-				stack_rect.x,
-				(int16_t) (stack_rect.y + si * h),
-				stack_rect.width,
-				(si == stack_n - 1) ? (stack_rect.height - si * h) : h
-			};
-			render_node(m, d, leaves[i], r);
-		}
-	}
-
-	free(leaves);
-}
-
-void apply_layout(monitor_t *m, desktop_t *d, node_t *n, xcb_rectangle_t rect, xcb_rectangle_t root_rect)
-{
-	if (n == NULL) {
-		return;
-	}
-
-	if (is_leaf(n)) {
-		render_node(m, d, n, rect);
-	} else {
-		xcb_rectangle_t first_rect;
-		xcb_rectangle_t second_rect;
-
-		if (d->layout == LAYOUT_MONOCLE || n->first_child->vacant || n->second_child->vacant) {
-			first_rect = second_rect = rect;
-		} else {
-			unsigned int fence;
-			if (n->split_type == TYPE_VERTICAL) {
-				fence = rect.width * n->split_ratio;
-				if ((n->first_child->constraints.min_width + n->second_child->constraints.min_width) <= rect.width) {
-					if (fence < n->first_child->constraints.min_width) {
-						fence = n->first_child->constraints.min_width;
-						n->split_ratio = (double) fence / (double) rect.width;
-					} else if (fence > (uint16_t) (rect.width - n->second_child->constraints.min_width)) {
-						fence = (rect.width - n->second_child->constraints.min_width);
-						n->split_ratio = (double) fence / (double) rect.width;
-					}
-				}
-				first_rect = (xcb_rectangle_t) {rect.x, rect.y, fence, rect.height};
-				second_rect = (xcb_rectangle_t) {rect.x + fence, rect.y, rect.width - fence, rect.height};
-			} else {
-				fence = rect.height * n->split_ratio;
-				if ((n->first_child->constraints.min_height + n->second_child->constraints.min_height) <= rect.height) {
-					if (fence < n->first_child->constraints.min_height) {
-						fence = n->first_child->constraints.min_height;
-						n->split_ratio = (double) fence / (double) rect.height;
-					} else if (fence > (uint16_t) (rect.height - n->second_child->constraints.min_height)) {
-						fence = (rect.height - n->second_child->constraints.min_height);
-						n->split_ratio = (double) fence / (double) rect.height;
-					}
-				}
-				first_rect = (xcb_rectangle_t) {rect.x, rect.y, rect.width, fence};
-				second_rect = (xcb_rectangle_t) {rect.x, rect.y + fence, rect.width, rect.height - fence};
-			}
-		}
-
-		apply_layout(m, d, n->first_child, first_rect, root_rect);
-		apply_layout(m, d, n->second_child, second_rect, root_rect);
-	}
-}
-
 presel_t *make_presel(void)
 {
 	presel_t *p = calloc(1, sizeof(presel_t));
@@ -254,6 +156,18 @@ bool set_ratio(node_t *n, double rat)
 	}
 
 	n->split_ratio = rat;
+	return true;
+}
+
+/* Analogous to set_ratio, but for LAYOUT_TALL/LAYOUT_WIDE, whose split is
+ * desktop-wide (master_ratio) rather than per-node (split_ratio). */
+bool set_master_ratio(desktop_t *d, double rat)
+{
+	if (d == NULL || d->master_ratio == rat) {
+		return false;
+	}
+
+	d->master_ratio = rat;
 	return true;
 }
 
@@ -778,7 +692,7 @@ node_t *make_node(uint32_t id)
 	}
 	node_t *n = calloc(1, sizeof(node_t));
 	n->id = id;
-    n->insertion_seq = node_seq_counter++;
+	n->insertion_seq = node_seq_counter++;
 	n->parent = n->first_child = n->second_child = NULL;
 	n->vacant = n->hidden = n->sticky = n->private = n->locked = n->marked = false;
 	n->split_ratio = split_ratio;
@@ -787,6 +701,13 @@ node_t *make_node(uint32_t id)
 	n->presel = NULL;
 	n->client = NULL;
 	return n;
+}
+
+void seed_node_seq_counter(uint32_t seq)
+{
+	if (seq >= node_seq_counter) {
+		node_seq_counter = seq + 1;
+	}
 }
 
 client_t *make_client(void)
@@ -1541,6 +1462,17 @@ bool swap_nodes(monitor_t *m1, desktop_t *d1, node_t *n1, monitor_t *m2, desktop
 	}
 
 	put_status(SBSC_MASK_NODE_SWAP, "node_swap 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X\n", m1->id, d1->id, n1->id, m2->id, d2->id, n2->id);
+
+	/* LAYOUT_TALL and LAYOUT_WIDE order leaves by insertion_seq, not by
+	 * tree position, so a plain topology swap (below) would be invisible
+	 * in those layouts. Swap the sequence numbers too whenever either
+	 * side is running one of them, so a swap always does a swap. */
+	if (d1->layout == LAYOUT_TALL || d1->layout == LAYOUT_WIDE ||
+	    d2->layout == LAYOUT_TALL || d2->layout == LAYOUT_WIDE) {
+		uint32_t tmp_seq = n1->insertion_seq;
+		n1->insertion_seq = n2->insertion_seq;
+		n2->insertion_seq = tmp_seq;
+	}
 
 	node_t *pn1 = n1->parent;
 	node_t *pn2 = n2->parent;
@@ -2353,4 +2285,6 @@ void regenerate_ids_in(node_t *n)
 	DEF_FLAG_COUNT(private)
 	DEF_FLAG_COUNT(locked)
 #undef DEF_FLAG_COUNT
+
+
 

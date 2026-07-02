@@ -465,18 +465,26 @@ void cmd_node(char **args, int num, FILE *rsp)
 				fail(rsp, "");
 				break;
 			}
+			bool master_stack = (trg.desktop->layout == LAYOUT_TALL || trg.desktop->layout == LAYOUT_WIDE);
 			if ((*args)[0] == '+' || (*args)[0] == '-') {
 				float delta;
 				if (sscanf(*args, "%f", &delta) == 1) {
-					double rat = trg.node->split_ratio;
+					double rat;
+					int max;
+					if (master_stack) {
+						rat = trg.desktop->master_ratio;
+						max = (trg.desktop->layout == LAYOUT_TALL ? trg.monitor->rectangle.width : trg.monitor->rectangle.height);
+					} else {
+						rat = trg.node->split_ratio;
+						max = (trg.node->split_type == TYPE_HORIZONTAL ? trg.node->rectangle.height : trg.node->rectangle.width);
+					}
 					if (delta > -1 && delta < 1) {
 						rat += delta;
 					} else {
-						int max = (trg.node->split_type == TYPE_HORIZONTAL ? trg.node->rectangle.height : trg.node->rectangle.width);
 						rat = ((max * rat) + delta) / max;
 					}
 					if (rat > 0 && rat < 1) {
-						changed |= set_ratio(trg.node, rat);
+						changed |= master_stack ? set_master_ratio(trg.desktop, rat) : set_ratio(trg.node, rat);
 					} else {
 						fail(rsp, "");
 						break;
@@ -488,7 +496,7 @@ void cmd_node(char **args, int num, FILE *rsp)
 			} else {
 				double rat;
 				if (sscanf(*args, "%lf", &rat) == 1 && rat > 0 && rat < 1) {
-					changed |= set_ratio(trg.node, rat);
+					changed |= master_stack ? set_master_ratio(trg.desktop, rat) : set_ratio(trg.node, rat);
 				} else {
 					fail(rsp, "node %s: Invalid argument: '%s'.\n", *(args - 1), *args);
 					break;
@@ -506,7 +514,14 @@ void cmd_node(char **args, int num, FILE *rsp)
 			}
 			flip_t flp;
 			if (parse_flip(*args, &flp)) {
-				flip_tree(trg.node, flp);
+				if (trg.desktop->layout == LAYOUT_TALL || trg.desktop->layout == LAYOUT_WIDE) {
+					/* No tree topology to flip here - the flip command
+					 * becomes a variant toggle instead (master side/edge). */
+					trg.desktop->layout_variant =
+						(trg.desktop->layout_variant == VARIANT_NORMAL) ? VARIANT_REVERSED : VARIANT_NORMAL;
+				} else {
+					flip_tree(trg.node, flp);
+				}
 				changed = true;
 			} else {
 				fail(rsp, "");
@@ -751,9 +766,9 @@ void cmd_desktop(char **args, int num, FILE *rsp)
                 layout_t cur = trg.desktop->user_layout;
                 layout_t next;
                 if (cyc == CYCLE_NEXT) {
-                    next = (cur + 1) % 3;
+                    next = (cur + 1) % 4;
                 } else {
-                    next = (cur + 3 - 1) % 3;
+                    next = (cur + 4 - 1) % 4;
                 }
                 ret = set_layout(trg.monitor, trg.desktop, next, true);
             } else if (parse_layout(*args, &lyt)) {
@@ -1632,6 +1647,15 @@ void set_setting(coordinates_t loc, char *name, char *value, FILE *rsp)
 			return;
 		}
 		return;
+	} else if (streq("master_ratio", name)) {
+		double r;
+		if (sscanf(value, "%lf", &r) == 1 && r > 0 && r < 1) {
+			master_ratio = r;
+		} else {
+			fail(rsp, "config: %s: Invalid value: '%s'.\n", name, value);
+			return;
+		}
+		return;
 #define SET_COLOR(s) \
 	} else if (streq(#s, name)) { \
 		if (!is_hex_color(value)) { \
@@ -1811,6 +1835,8 @@ void get_setting(coordinates_t loc, char *name, FILE* rsp)
 {
 	if (streq("split_ratio", name)) {
 		fprintf(rsp, "%lf", split_ratio);
+	} else if (streq("master_ratio", name)) {
+		fprintf(rsp, "%lf", master_ratio);
 	} else if (streq("border_width", name)) {
 		if (loc.node != NULL) {
 			for (node_t *n = first_extrema(loc.node); n != NULL; n = next_leaf(n, loc.node)) {

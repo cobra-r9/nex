@@ -10,6 +10,7 @@
 #include "tree.h"
 #include "query.h"
 #include "geometry.h"
+#include "layout.h"
 
 void query_state(FILE *rsp)
 {
@@ -76,8 +77,10 @@ void query_desktop(desktop_t *d, FILE *rsp)
 	fprintf(rsp, "{");
 	fprintf(rsp, "\"name\":\"%s\",", d->name);
 	fprintf(rsp, "\"id\":%u,", d->id);
-	fprintf(rsp, "\"layout\":\"%s\",", LAYOUT_STR(d->layout));
-	fprintf(rsp, "\"userLayout\":\"%s\",", LAYOUT_STR(d->user_layout));
+	fprintf(rsp, "\"layout\":\"%s\",", layout_str(d->layout));
+	fprintf(rsp, "\"userLayout\":\"%s\",", layout_str(d->user_layout));
+	fprintf(rsp, "\"layoutVariant\":\"%s\",", layout_variant_str(d->layout_variant));
+	fprintf(rsp, "\"masterRatio\":%lf,", d->master_ratio);
 	fprintf(rsp, "\"windowGap\":%i,", d->window_gap);
 	fprintf(rsp, "\"borderWidth\":%u,", d->border_width);
 	fprintf(rsp, "\"focusedNodeId\":%u,", d->focus != NULL ? d->focus->id : 0);
@@ -96,6 +99,7 @@ void query_node(node_t *n, FILE *rsp)
 	} else {
 		fprintf(rsp, "{");
 		fprintf(rsp, "\"id\":%u,", n->id);
+		fprintf(rsp, "\"insertionSeq\":%u,", n->insertion_seq);
 		fprintf(rsp, "\"splitType\":\"%s\",", SPLIT_TYPE_STR(n->split_type));
 		fprintf(rsp, "\"splitRatio\":%lf,", n->split_ratio);
 		fprintf(rsp, "\"vacant\":%s,", BOOL_STR(n->vacant));
@@ -1235,27 +1239,61 @@ bool desktop_matches(coordinates_t *loc, coordinates_t *ref, desktop_select_t *s
 		return false;
 	}
 
-#define DLAYOUT(p, e) \
-	if (sel->p != OPTION_NONE && \
-	    loc->desktop->layout != e \
-	    ? sel->p == OPTION_TRUE \
-	    : sel->p == OPTION_FALSE) { \
-		return false; \
+	if (sel->tiled != OPTION_NONE &&
+	    loc->desktop->layout != LAYOUT_BINARY
+	    ? sel->tiled == OPTION_TRUE
+	    : sel->tiled == OPTION_FALSE) {
+		return false;
 	}
-	DLAYOUT(tiled, LAYOUT_TILED)
-	DLAYOUT(monocle, LAYOUT_MONOCLE)
-#undef DLAYOUT
 
-#define DUSERLAYOUT(p, e) \
-	if (sel->p != OPTION_NONE && \
-	    loc->desktop->user_layout != e \
-	    ? sel->p == OPTION_TRUE \
-	    : sel->p == OPTION_FALSE) { \
-		return false; \
+	if (sel->monocle != OPTION_NONE &&
+	    loc->desktop->layout != LAYOUT_MONOCLE
+	    ? sel->monocle == OPTION_TRUE
+	    : sel->monocle == OPTION_FALSE) {
+		return false;
 	}
-	DUSERLAYOUT(user_tiled, LAYOUT_TILED)
-	DUSERLAYOUT(user_monocle, LAYOUT_MONOCLE)
-#undef DUSERLAYOUT
+
+	if (sel->tall != OPTION_NONE &&
+	    loc->desktop->layout != LAYOUT_TALL
+	    ? sel->tall == OPTION_TRUE
+	    : sel->tall == OPTION_FALSE) {
+		return false;
+	}
+
+	if (sel->wide != OPTION_NONE &&
+	    loc->desktop->layout != LAYOUT_WIDE
+	    ? sel->wide == OPTION_TRUE
+	    : sel->wide == OPTION_FALSE) {
+		return false;
+	}
+
+	if (sel->user_tiled != OPTION_NONE &&
+	    loc->desktop->user_layout != LAYOUT_BINARY
+	    ? sel->user_tiled == OPTION_TRUE
+	    : sel->user_tiled == OPTION_FALSE) {
+		return false;
+	}
+
+	if (sel->user_monocle != OPTION_NONE &&
+	    loc->desktop->user_layout != LAYOUT_MONOCLE
+	    ? sel->user_monocle == OPTION_TRUE
+	    : sel->user_monocle == OPTION_FALSE) {
+		return false;
+	}
+
+	if (sel->user_tall != OPTION_NONE &&
+	    loc->desktop->user_layout != LAYOUT_TALL
+	    ? sel->user_tall == OPTION_TRUE
+	    : sel->user_tall == OPTION_FALSE) {
+		return false;
+	}
+
+	if (sel->user_wide != OPTION_NONE &&
+	    loc->desktop->user_layout != LAYOUT_WIDE
+	    ? sel->user_wide == OPTION_TRUE
+	    : sel->user_wide == OPTION_FALSE) {
+		return false;
+	}
 
 	return true;
 }
