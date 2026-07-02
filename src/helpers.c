@@ -95,7 +95,7 @@ char *copy_string(char *str, size_t len)
 	return cpy;
 }
 
-char *mktempfifo(const char *template)
+char *mktempfifo(const char *tempfilo_template)
 {
 	int tempfd;
 	char *runtime_dir = getenv(RUNTIME_DIR_ENV);
@@ -103,12 +103,12 @@ char *mktempfifo(const char *template)
 		runtime_dir = "/tmp";
 	}
 
-	char *fifo_path = malloc(strlen(runtime_dir)+1+strlen(template)+1);
+	char *fifo_path = malloc(strlen(runtime_dir)+1+strlen(tempfilo_template)+1);
 	if (fifo_path == NULL) {
 		return NULL;
 	}
 
-	sprintf(fifo_path, "%s/%s", runtime_dir, template);
+	sprintf(fifo_path, "%s/%s", runtime_dir, tempfilo_template);
 
 	if ((tempfd = mkstemp(fifo_path)) == -1) {
 		free(fifo_path);
