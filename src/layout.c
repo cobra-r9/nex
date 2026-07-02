@@ -29,7 +29,7 @@ static node_t **collect_ordered_leaves(desktop_t *d, int *out_count) {
 	node_t **leaves = malloc(capacity * sizeof(node_t *));
 
 	for (node_t *f = first_extrema(d->root); f != NULL; f = next_leaf(f, d->root)) {
-		if (f->hidden || f->client == NULL) {
+		if (f->hidden || f->client == NULL || f->vacant) {
 			continue;
 		}
 		if (count == capacity) {
