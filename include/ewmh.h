@@ -1,8 +1,11 @@
 #pragma once
 
+
+//--------------------------------------------includes 
 #include <xcb/xcb_ewmh.h>
 #include "types.h"
 
+//-------------------------------------------declarations
 extern xcb_ewmh_connection_t *ewmh;
 
 void ewmh_init(void);
