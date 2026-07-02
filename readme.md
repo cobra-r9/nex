@@ -1,6 +1,6 @@
 ## Description
 
-*nex* is a tiling window manager that represents windows as the leaves of a full binary tree.
+**Nex** is a tiling window manager which is an **extended fork of [bspwm](https://github.com/baskerville/bspwm)**, that supports additional features like tall left, tall right, wide top, wide bottom (the directions are with reference to the master window), master stack layouts and other layouts(soon).
 
 It only responds to X events, and the messages it receives on a dedicated socket.
 
@@ -41,7 +41,7 @@ Each node in a tree either has zero or two children.
 
 Each internal node is responsible for splitting a rectangle in half.
 
-A split is defined by two parameters: the type (horizontal or vertical) and the ratio (a real number *r* such that *0 < r < 1*).
+A split is defined by two parameters: the type (horizontal or vertical) and the ratio (a real number *r* such that *0 < r < 1*) in the binary space layout (layout = binary). In other layouts, there is no such split which follows the binary tree, instead it follows a fixed algorithm to insert the new windows, defined by master split ratio and mode (relative location of the master window with respect to the slaves, where split ratio and horizontal or vertical have no effect.)
 
 Each leaf node holds exactly one window.
 
