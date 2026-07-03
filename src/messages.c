@@ -14,6 +14,7 @@
 #include "restore.h"
 #include "settings.h"
 #include "tree.h"
+#include "types.h"
 #include "window.h"
 #include "common.h"
 #include "parse.h"
@@ -1650,7 +1651,21 @@ void set_setting(coordinates_t loc, char *name, char *value, FILE *rsp)
 	} else if (streq("master_ratio", name)) {
 		double r;
 		if (sscanf(value, "%lf", &r) == 1 && r > 0 && r < 1) {
-			master_ratio = r;
+			if(loc.desktop != NULL) {
+                loc.desktop->master_ratio = r;
+            } else if (loc.monitor != NULL) {
+                for (desktop_t* d = loc.monitor->desk_head; d != NULL; d = d->next ) {
+                    d->master_ratio = r;
+                }
+                master_ratio = r;
+            } else {
+                master_ratio = r;
+                for (monitor_t* m = mon_head; m != NULL; m = m->next) {
+                    for (desktop_t*d = m->desk_head; d != NULL; d = d->next) {
+                        d->master_ratio = r;
+                    }
+                }
+            }
 		} else {
 			fail(rsp, "config: %s: Invalid value: '%s'.\n", name, value);
 			return;
