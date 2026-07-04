@@ -4,6 +4,9 @@ Yet another dynamic window manager (dynamic tiling window manager). Sole purpose
 
 Other tiling WMs exists, but they do not offer **configuration via bash/shell scripts**, though it's parent `bspwm` has this functionality - it does not have extended layouts.
 
+>[!DANGER]
+> It is a **rebuild** branch - that is : I am building `nex` from scratch here, new model and commands. Do not use this. It is very unstable.
+
 ### Description
 
 **Nex** is a dynamic window manager which is an **extended fork of [bspwm](https://github.com/baskerville/bspwm)**, that supports additional features like tall left, tall right, wide top, wide bottom (the directions are with reference to the master window), master stack layouts, a grid layout (row-major/column-major fill), and other layouts(soon).
