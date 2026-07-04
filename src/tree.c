@@ -61,6 +61,9 @@ void arrange(monitor_t *m, desktop_t *d) {
 		case LAYOUT_WIDE:
 			layout_wide_arrange(m, d, rect);
 			break;
+		case LAYOUT_GRID:
+			layout_grid_arrange(m, d, rect);
+			break;
 	}
 }
 
@@ -1463,12 +1466,13 @@ bool swap_nodes(monitor_t *m1, desktop_t *d1, node_t *n1, monitor_t *m2, desktop
 
 	put_status(SBSC_MASK_NODE_SWAP, "node_swap 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X 0x%08X\n", m1->id, d1->id, n1->id, m2->id, d2->id, n2->id);
 
-	/* LAYOUT_TALL and LAYOUT_WIDE order leaves by insertion_seq, not by
-	 * tree position, so a plain topology swap (below) would be invisible
-	 * in those layouts. Swap the sequence numbers too whenever either
-	 * side is running one of them, so a swap always does a swap. */
-	if (d1->layout == LAYOUT_TALL || d1->layout == LAYOUT_WIDE ||
-	    d2->layout == LAYOUT_TALL || d2->layout == LAYOUT_WIDE) {
+	/* LAYOUT_TALL, LAYOUT_WIDE, and LAYOUT_GRID order leaves by
+	 * insertion_seq, not by tree position, so a plain topology swap
+	 * (below) would be invisible in those layouts. Swap the sequence
+	 * numbers too whenever either side is running one of them, so a
+	 * swap always does a swap. */
+	if (d1->layout == LAYOUT_TALL || d1->layout == LAYOUT_WIDE || d1->layout == LAYOUT_GRID ||
+	    d2->layout == LAYOUT_TALL || d2->layout == LAYOUT_WIDE || d2->layout == LAYOUT_GRID) {
 		uint32_t tmp_seq = n1->insertion_seq;
 		n1->insertion_seq = n2->insertion_seq;
 		n2->insertion_seq = tmp_seq;

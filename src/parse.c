@@ -55,6 +55,9 @@ bool parse_layout(char *s, layout_t *l) {
 	} else if (streq("wide", s)) {
 		*l = LAYOUT_WIDE;
 		return true;
+	} else if (streq("grid", s)) {
+		*l = LAYOUT_GRID;
+		return true;
 	}
 	return false;
 }
@@ -540,10 +543,12 @@ bool parse_desktop_modifiers(char *desc, desktop_select_t *sel)
 		GET_MOD(monocle)
 		GET_MOD(tall)
 		GET_MOD(wide)
+		GET_MOD(grid)
 		GET_MOD(user_tiled)
 		GET_MOD(user_monocle)
 		GET_MOD(user_tall)
 		GET_MOD(user_wide)
+		GET_MOD(user_grid)
 		} else {
 			return false;
 		}

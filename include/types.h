@@ -118,8 +118,16 @@ typedef enum {
 	LAYOUT_BINARY,
 	LAYOUT_MONOCLE,
 	LAYOUT_TALL,
-	LAYOUT_WIDE
+	LAYOUT_WIDE,
+	LAYOUT_GRID
 } layout_t;
+
+/* Not a layout_t value itself (kept out of the enum so existing
+ * `switch (layout_t)` blocks stay exhaustive without a dummy case) -
+ * just the count of real layouts, for cycling code (desktop -l
+ * next/prev) to wrap correctly as layouts are added. Must be updated
+ * alongside the enum above. */
+#define LAYOUT_COUNT (LAYOUT_GRID + 1)
 
 typedef enum {
 	VARIANT_NORMAL,
@@ -188,10 +196,12 @@ typedef struct {
 	option_bool_t monocle;
 	option_bool_t tall;
 	option_bool_t wide;
+	option_bool_t grid;
 	option_bool_t user_tiled;
 	option_bool_t user_monocle;
 	option_bool_t user_tall;
 	option_bool_t user_wide;
+	option_bool_t user_grid;
 } desktop_select_t;
 
 typedef struct {

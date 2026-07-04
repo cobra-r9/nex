@@ -9,6 +9,7 @@ void layout_binary_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
 void layout_monocle_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
 void layout_tall_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
 void layout_wide_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
+void layout_grid_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect);
 
 /* String/char representations, used by query.c (JSON), desktop.c (status
  * events) and subscribe.c (status bar feed). Kept here instead of a macro

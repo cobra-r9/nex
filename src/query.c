@@ -1267,6 +1267,13 @@ bool desktop_matches(coordinates_t *loc, coordinates_t *ref, desktop_select_t *s
 		return false;
 	}
 
+	if (sel->grid != OPTION_NONE &&
+	    loc->desktop->layout != LAYOUT_GRID
+	    ? sel->grid == OPTION_TRUE
+	    : sel->grid == OPTION_FALSE) {
+		return false;
+	}
+
 	if (sel->user_tiled != OPTION_NONE &&
 	    loc->desktop->user_layout != LAYOUT_BINARY
 	    ? sel->user_tiled == OPTION_TRUE
@@ -1292,6 +1299,13 @@ bool desktop_matches(coordinates_t *loc, coordinates_t *ref, desktop_select_t *s
 	    loc->desktop->user_layout != LAYOUT_WIDE
 	    ? sel->user_wide == OPTION_TRUE
 	    : sel->user_wide == OPTION_FALSE) {
+		return false;
+	}
+
+	if (sel->user_grid != OPTION_NONE &&
+	    loc->desktop->user_layout != LAYOUT_GRID
+	    ? sel->user_grid == OPTION_TRUE
+	    : sel->user_grid == OPTION_FALSE) {
 		return false;
 	}
 

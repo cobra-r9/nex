@@ -1,6 +1,7 @@
 
 
 #include <stdlib.h>
+#include <math.h>
 #include "tree.h"
 #include "layout.h"
 
@@ -237,6 +238,89 @@ void layout_wide_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect) {
 	free(leaves);
 }
 
+/* ============================== GRID ============================== */
+/* Cells as close to a square arrangement as possible (cols =
+ * ceil(sqrt(n)), rows = ceil(n / cols)), filled in insertion order.
+ * VARIANT_NORMAL fills row-major (left to right, wrapping to the next
+ * row); VARIANT_REVERSED fills column-major (top to bottom, wrapping to
+ * the next column). Whichever line (row, in row-major; column, in
+ * column-major) ends up short on cells because n doesn't divide evenly
+ * has its cells stretched along the *other* axis so no space is left
+ * empty - same "leftover stack member absorbs the remainder" approach
+ * TALL/WIDE use for their stack, just applied per-line here. */
+
+void layout_grid_arrange(monitor_t *m, desktop_t *d, xcb_rectangle_t rect) {
+	int n_leaves;
+	node_t **leaves = collect_ordered_leaves(d, &n_leaves);
+
+    int tiled_n = 0;
+    for (int i = 0; i < n_leaves; i++) {
+        if (leaves[i]->vacant) {
+            render_node(m, d, leaves[i], rect);
+        } else {
+            leaves[tiled_n++] = leaves[i];
+        }
+    }
+    n_leaves = tiled_n;
+
+	if (n_leaves == 0) {
+		free(leaves);
+		return;
+	}
+
+	bool col_major = (d->layout_variant == VARIANT_REVERSED);
+
+	/* "per_line" = cells along the major axis before wrapping (a row's
+	 * width in row-major, a column's height in column-major).
+	 * "lines" = how many lines that wraps into along the minor axis. */
+	int per_line = (int) ceil(sqrt((double) n_leaves));
+	int lines = (int) ceil((double) n_leaves / (double) per_line);
+	int last_line_count = n_leaves - (lines - 1) * per_line;
+
+	unsigned int total_major = col_major ? rect.height : rect.width;
+	unsigned int total_minor = col_major ? rect.width : rect.height;
+	unsigned int line_minor = total_minor / lines;
+
+	for (int i = 0; i < n_leaves; i++) {
+		int line = i / per_line;
+		int pos = i % per_line;
+		bool is_last_line = (line == lines - 1);
+		int line_count = is_last_line ? last_line_count : per_line;
+
+		unsigned int cell_major = total_major / line_count;
+		unsigned int major_off = pos * cell_major;
+		unsigned int major_size = (pos == line_count - 1) ? (total_major - major_off) : cell_major;
+
+		unsigned int minor_off = line * line_minor;
+		unsigned int minor_size = is_last_line ? (total_minor - minor_off) : line_minor;
+
+		xcb_rectangle_t r;
+		if (col_major) {
+			/* major axis runs down a column (height), minor axis
+			 * steps across columns (width). */
+			r = (xcb_rectangle_t) {
+				(int16_t) (rect.x + minor_off),
+				(int16_t) (rect.y + major_off),
+				minor_size,
+				major_size
+			};
+		} else {
+			/* major axis runs along a row (width), minor axis
+			 * steps down rows (height). */
+			r = (xcb_rectangle_t) {
+				(int16_t) (rect.x + major_off),
+				(int16_t) (rect.y + minor_off),
+				major_size,
+				minor_size
+			};
+		}
+
+		render_node(m, d, leaves[i], r);
+	}
+
+	free(leaves);
+}
+
 
 /* ============================== STRINGS ============================== */
 /* Canonical name is "binary", not the old "tiled" - "tiled" is still
@@ -253,6 +337,8 @@ const char *layout_str(layout_t l) {
 			return "tall";
 		case LAYOUT_WIDE:
 			return "wide";
+		case LAYOUT_GRID:
+			return "grid";
 	}
 	return "binary";
 }
@@ -267,6 +353,8 @@ char layout_chr(layout_t l) {
 			return 'T';
 		case LAYOUT_WIDE:
 			return 'W';
+		case LAYOUT_GRID:
+			return 'G';
 	}
 	return 'B';
 }

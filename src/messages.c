@@ -515,9 +515,12 @@ void cmd_node(char **args, int num, FILE *rsp)
 			}
 			flip_t flp;
 			if (parse_flip(*args, &flp)) {
-				if (trg.desktop->layout == LAYOUT_TALL || trg.desktop->layout == LAYOUT_WIDE) {
+				if (trg.desktop->layout == LAYOUT_TALL || trg.desktop->layout == LAYOUT_WIDE ||
+				    trg.desktop->layout == LAYOUT_GRID) {
 					/* No tree topology to flip here - the flip command
-					 * becomes a variant toggle instead (master side/edge). */
+					 * becomes a variant toggle instead: master side/edge
+					 * for TALL/WIDE, row-major vs column-major fill for
+					 * GRID. */
 					trg.desktop->layout_variant =
 						(trg.desktop->layout_variant == VARIANT_NORMAL) ? VARIANT_REVERSED : VARIANT_NORMAL;
 				} else {
@@ -767,9 +770,9 @@ void cmd_desktop(char **args, int num, FILE *rsp)
                 layout_t cur = trg.desktop->user_layout;
                 layout_t next;
                 if (cyc == CYCLE_NEXT) {
-                    next = (cur + 1) % 4;
+                    next = (cur + 1) % LAYOUT_COUNT;
                 } else {
-                    next = (cur + 4 - 1) % 4;
+                    next = (cur + LAYOUT_COUNT - 1) % LAYOUT_COUNT;
                 }
                 ret = set_layout(trg.monitor, trg.desktop, next, true);
             } else if (parse_layout(*args, &lyt)) {
