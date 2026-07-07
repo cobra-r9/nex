@@ -64,6 +64,19 @@ static void layout_binary_apply(monitor_t *m, desktop_t *d, node_t *n, xcb_recta
 		return;
 	}
 
+	/* Branch (internal) nodes must carry their own rectangle too, not
+	 * just leaves. find_fence() and get_rectangle() walk *ancestor*
+	 * nodes and read n->rectangle to work out where a split boundary
+	 * sits; if only leaves ever get a rectangle assigned, every branch
+	 * node's rectangle stays {0,0,0,0} forever. That makes find_fence()
+	 * either fail to find a resize fence at all, or match one whose
+	 * rectangle is stale/zero, so adjust_ratios() divides by a zero
+	 * width/height and poisons split_ratio with NaN - which then
+	 * collapses a pane to nothing on the next arrange(). Assigning it
+	 * here, unconditionally, before the leaf check, mirrors upstream
+	 * bspwm's apply_layout() and keeps every node's rectangle current. */
+	n->rectangle = rect;
+
 	if (is_leaf(n)) {
 		render_node(m, d, n, rect);
 		return;
